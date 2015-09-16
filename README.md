@@ -1,12 +1,10 @@
-[![Circle CI](https://circleci.com/gh/satnet-project/client.svg?style=shield)](https://circleci.com/gh/satnet-project/client)
-[![Coverage Status](https://coveralls.io/repos/satnet-project/client/badge.svg?branch=master)](https://coveralls.io/r/satnet-project/client?branch=master)
 
 
-### Generic client for SATNet project.
+### SATNet client for the University of Vigo.
 
 
-This repository contains the source code for a generic client of the 
-SATNet network. 
+This repository contains the source code for  the SATNet client created 
+for the University of Vigo.
 
 This is the code for a GS with a TNC to demodulate/modulate the frames 
 which are being received/sent from/to the satellite.
@@ -35,8 +33,3 @@ the parameters as follows:
 3. For a UDP connection you must set an ip and a port: 
 
     `python client_amp.py -g -u username -p userpassword -t slot -c udp -i ip -u ipport`
-
-#### Other resources
-
-A basic client-server implementation of the AMP protocol for Java and 
-Python can be found at [this repository](https://github.com/xcrespo/Twisted-AMP-bidirectional)
