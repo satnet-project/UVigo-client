@@ -184,10 +184,10 @@ class Client():
              'serialport')
             self.CONNECTION_INFO['baudrate'] = config.get('Serial',\
              'baudrate')
-        if self.CONNECTION_INFO['connection'] == 'udp':
-            self.CONNECTION_INFO['ip'] = config.get('UDP', 'ip')
-            self.CONNECTION_INFO['udpport'] = int(config.get('UDP',\
-             'udpport'))
+        # if self.CONNECTION_INFO['connection'] == 'udp':
+        #     self.CONNECTION_INFO['ip'] = config.get('UDP', 'ip')
+        #     self.CONNECTION_INFO['udpport'] = int(config.get('UDP',\
+        #      'udpport'))
         self.paramValidation()
 
     def paramValidation(self):
@@ -206,11 +206,11 @@ class Client():
             if 'serialport' not in self.CONNECTION_INFO or 'baudrate' not in self.CONNECTION_INFO:
                 log.msg('Missing some client configurations (serialport [-s] or baudrate [-b])')
                 exit()
-        if self.CONNECTION_INFO['connection'] == 'udp':
-            log.msg('Using an UDP interface with the GS')
-            if 'ip' not in self.CONNECTION_INFO or 'udpport' not in self.CONNECTION_INFO:
-                log.msg('Missing some client configurations (ip [-i] or udpport [-u])')
-                exit()
+        # if self.CONNECTION_INFO['connection'] == 'udp':
+        #     log.msg('Using an UDP interface with the GS')
+        #     if 'ip' not in self.CONNECTION_INFO or 'udpport' not in self.CONNECTION_INFO:
+        #         log.msg('Missing some client configurations (ip [-i] or udpport [-u])')
+        #         exit()
 
     def usage(self):
         print ("USAGE of client_amp.py\n"
@@ -380,8 +380,10 @@ class SatNetGUI(QtGui.QDialog):
             self.CONNECTION_INFO['username'] = str(self.LabelUsername.text())
             self.CONNECTION_INFO['password'] = str(self.LabelPassword.text())
             self.CONNECTION_INFO['slot_id'] = int(self.LabelSlotID.text())
-            self.CONNECTION_INFO['connection'] = str(self.LabelConnection.currentText())
-            self.CONNECTION_INFO['serialport'] = str(self.LabelSerialPort.currentText())
+            self.CONNECTION_INFO['connection'] =\
+             str(self.LabelConnection.currentText())
+            self.CONNECTION_INFO['serialport'] =\
+             str(self.LabelSerialPort.currentText())
             self.CONNECTION_INFO['baudrate'] = str(self.LabelBaudrate.text())
             self.CONNECTION_INFO['ip'] = self.LabelUDP.text()
             self.CONNECTION_INFO['udpport'] = self.LabelUDPPort.text()
