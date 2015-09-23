@@ -70,7 +70,7 @@ class ClientProtocol(AMP):
              iSlotId=self.CONNECTION_INFO['slot_id'])
         except Exception as e:
             log.err(e)
-            # reactor.stop()
+            reactor.stop()
             # exit()
 
     def vNotifyMsg(self, sMsg):
@@ -158,7 +158,6 @@ class Client():
 class SatNetGUI(QtGui.QDialog):
 
     def __init__(self, parent = None):
-        log.startLogging(sys.stdout)
         QtGui.QWidget.__init__(self, parent)
         self.initUI()
 
@@ -320,9 +319,9 @@ class SatNetGUI(QtGui.QDialog):
 
     # To-do. Not closed properly.
     def CloseConnection(self):
-        reactor.stop()
-        self.close()
-        sys.exit(app.exec_())
+        # reactor.stop()
+        # self.close()
+        app.exec_()
 
     def LoadParameters(self):
         self.CONNECTION_INFO = {}
@@ -402,7 +401,8 @@ class SatNetGUI(QtGui.QDialog):
                 exit()
 
     def usage(self):
-        print ("USAGE of client_amp.py\n"
+        print ("\n"
+                "USAGE of client_amp.py\n"
                 "Usage: python client_amp.py [-h] # Shows script help\n"
                 "Usage: python client_amp.py [-f] # Load config from file\n"                
                 "Usage: python client_amp.py [-u <username>] # Set SATNET username to login\n"
@@ -435,6 +435,7 @@ class XStream(QtCore.QObject):
 
     _stdout = None
     _stderr = None
+
     messageWritten = QtCore.pyqtSignal(str)
 
     def flush( self ):
@@ -464,11 +465,9 @@ class XStream(QtCore.QObject):
 
 if __name__ == '__main__':
 
+    log.startLogging(sys.stdout)
     app = QtGui.QApplication(sys.argv)
-    # app.aboutToQuit.connect(app.exec_())
-
     window = SatNetGUI()
-
     app.aboutToQuit.connect(window.CloseConnection)
     window.show()
 

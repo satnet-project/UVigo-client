@@ -23,6 +23,7 @@ __author__ = 'xabicrespog@gmail.com'
 from twisted.python import log
 import time
 import threading
+import sys
 
 class GroundStationInterface():
     """
@@ -82,6 +83,7 @@ class GroundStationInterface():
     GS = None
 
     def __init__(self, CONNECTION_INFO, GS, AMP=None):
+        log.startLogging(sys.stdout)
         self.CONNECTION_INFO = CONNECTION_INFO
         self.AMP = AMP
         self.GS = GS
