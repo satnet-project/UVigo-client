@@ -57,7 +57,7 @@ class ClientProtocol(AMP):
 
     def connectionLost(self, reason):
         log.err("Connection lost")
-        log.err(reason)
+        # log.err(reason)
         self.gsi.disconnectProtocol()
 
     @inlineCallbacks
@@ -121,21 +121,30 @@ class ClientReconnectFactory(ReconnectingClientFactory):
         self.resetDelay()
         return ClientProtocol(self.CONNECTION_INFO, self.gsi)
 
+    # def clientConnectionLost(self, connector, reason):
+    #     log.msg('Lost connection.  Reason: ', reason)
+    #     ReconnectingClientFactory.clientConnectionLost(self,\
+    #      connector, reason)
+
+    # def clientConnectionFailed(self, connector, reason):
+    #     log.msg('Connection failed. Reason: ', reason)
+    #     ReconnectingClientFactory.clientConnectionFailed(self,\
+    #      connector, reason)
+
     def clientConnectionLost(self, connector, reason):
-        log.msg('Lost connection.  Reason: ', reason)
-        ReconnectingClientFactory.clientConnectionLost(self,\
-         connector, reason)
+        log.msg('Estoy en clientConnectionLost')
+        # ReconnectingClientFactory.clientConnectionLost(self,\
+        #  connector, reason)
 
     def clientConnectionFailed(self, connector, reason):
-        log.msg('Connection failed. Reason: ', reason)
-        ReconnectingClientFactory.clientConnectionFailed(self,\
-         connector, reason)
+        log.msg('Estoy en clientConnectionFailed', reason)
+        # ReconnectingClientFactory.clientConnectionFailed(self,\
+        #  connector, reason)
 
 
 class Client():
     """
-    This class starts the client by reading the configuration 
-    parameters either from a file called config.ini or from the command line.
+    This class starts the client using the data provided by user interface.
 
     :ivar CONNECTION_INFO:
         This variable contains the following data: username, password, slot_id, 
@@ -143,16 +152,20 @@ class Client():
     :type CONNECTION_INFO:
         L{Dictionary}
 
+    :ivar
+
     """
     def __init__(self, CONNECTION_INFO):
         self.CONNECTION_INFO = CONNECTION_INFO
-        self.createConnection()
 
     def createConnection(self):
         gsi = GroundStationInterface(self.CONNECTION_INFO, "Vigo")
-        reactor.connectSSL('localhost', 1234,\
+
+        connector = reactor.connectSSL('localhost', 1234,\
          ClientReconnectFactory(self.CONNECTION_INFO, gsi),\
           ClientContextFactory())
+
+        return connector
 
 
 class SatNetGUI(QtGui.QDialog):
@@ -163,7 +176,7 @@ class SatNetGUI(QtGui.QDialog):
 
     def initUI(self):
         QtGui.QToolTip.setFont(QtGui.QFont('SansSerif', 12))
-        self.resize(1300, 800)
+        self.setFixedSize(1300, 800)
         self.setWindowTitle("SATNet client - Universidade de Vigo") 
 
         # Control buttons.
@@ -172,19 +185,24 @@ class SatNetGUI(QtGui.QDialog):
         buttons.setLayout(grid)
 
         # New connection.
-        ButtonNew = QtGui.QPushButton("New connection")
+        ButtonNew = QtGui.QPushButton("Connect")
+        ButtonNew.setToolTip("Start a new connection")
         ButtonNew.setFixedWidth(145)
+        # ButtonNew.setCheckable(True)
         ButtonNew.clicked.connect(self.NewConnection)
         # Close connection.
-        ButtonCancel = QtGui.QPushButton("Close connection")
+        ButtonCancel = QtGui.QPushButton("Disconnect")
+        ButtonCancel.setToolTip("End current connection")
         ButtonCancel.setFixedWidth(145)
         ButtonCancel.clicked.connect(self.CloseConnection)
         # Load parameters from file
         ButtonLoad = QtGui.QPushButton("Load parameters from file")
+        ButtonLoad.setToolTip("Load parameters from <i>config.ini</i> file")
         ButtonLoad.setFixedWidth(300)
         ButtonLoad.clicked.connect(self.LoadParameters)
         # Help.
         ButtonHelp = QtGui.QPushButton("Help")
+        ButtonHelp.setToolTip("Click for help")
         ButtonHelp.setFixedWidth(145)
         ButtonHelp.clicked.connect(self.usage)
 
@@ -273,6 +291,7 @@ class SatNetGUI(QtGui.QDialog):
                     self.LabelUDPPort.setText(arg)
 
     def NewConnection(self):
+
         self.CONNECTION_INFO = {}
 
         try:
@@ -315,13 +334,16 @@ class SatNetGUI(QtGui.QDialog):
             print self.LabelUDPPort.text()
             # self.CONNECTION_INFO['udpport'] = int(self.LabelUDPPort.text())
 
-        c = Client(self.CONNECTION_INFO)
+        self.c = Client(self.CONNECTION_INFO).createConnection()
 
     # To-do. Not closed properly.
     def CloseConnection(self):
-        # reactor.stop()
-        # self.close()
-        app.exec_()
+        try:
+            self.c.disconnect()
+            reactor.stop()
+        except Exception:
+            print "Reactor not running."
+
 
     def LoadParameters(self):
         self.CONNECTION_INFO = {}
@@ -402,9 +424,7 @@ class SatNetGUI(QtGui.QDialog):
 
     def usage(self):
         print ("\n"
-                "USAGE of client_amp.py\n"
-                "Usage: python client_amp.py [-h] # Shows script help\n"
-                "Usage: python client_amp.py [-f] # Load config from file\n"                
+                "USAGE of client_amp.py\n"               
                 "Usage: python client_amp.py [-u <username>] # Set SATNET username to login\n"
                 "Usage: python client_amp.py [-p <password>] # Set SATNET user password to login\n"
                 "Usage: python client_amp.py [-t <slot_ID>] # Set the slot id corresponding to the pass you will track\n"
@@ -417,7 +437,6 @@ class SatNetGUI(QtGui.QDialog):
                 "Example for serial config: python client_amp.py -g -u crespo -p cre.spo -t 2 -c serial -s /dev/ttyS1 -b 115200\n"
                 "Example for udp config: python client_amp.py -g -u crespo -p cre.spo -t 2 -c udp -i 127.0.0.1 -u 5001\n"
                 "\n"
-                "Example using file config: python client_amp.py -f -t 2\n"
                 "[User]\n"
                 "username: crespo\n"
                 "password: cre.spo\n"
@@ -429,6 +448,27 @@ class SatNetGUI(QtGui.QDialog):
                 "[UDP]\n"
                 "ip: 127.0.0.1\n"
                 "udpport: 5005")
+
+
+    def closeEvent(self, event):
+        
+        reply = QtGui.QMessageBox.question(self, 'Exit confirmation',
+            "Are you sure to quit?", QtGui.QMessageBox.Yes | 
+            QtGui.QMessageBox.No, QtGui.QMessageBox.No)
+
+        if reply == QtGui.QMessageBox.Yes:
+            try:
+                reactor.stop()
+            except Exception:
+                log.msg("Reactor not running.")
+            app.instance().quit
+            event.accept()
+
+            # Tengo que parar el protocolo AMP.
+
+            # GroundStationInterface.disconnectProtocol()
+        else:
+            event.ignore()  
 
 
 class XStream(QtCore.QObject):
@@ -468,7 +508,7 @@ if __name__ == '__main__':
     log.startLogging(sys.stdout)
     app = QtGui.QApplication(sys.argv)
     window = SatNetGUI()
-    app.aboutToQuit.connect(window.CloseConnection)
+    # app.aboutToQuit.connect(window.CloseConnection)
     window.show()
 
     from qtreactor import pyqt4reactor
@@ -476,3 +516,5 @@ if __name__ == '__main__':
 
     from twisted.internet import reactor
     reactor.run()
+
+    sys.exit(app.exec_())
