@@ -31,6 +31,7 @@ from twisted.internet.protocol import ReconnectingClientFactory
 from twisted.protocols.amp import AMP
 from twisted.cred.credentials import UsernamePassword
 from twisted.internet.defer import inlineCallbacks
+from twisted.python.logfile import DailyLogFile
 
 from protocol.ampauth.commands import Login
 from protocol.ampCommands import StartRemote, NotifyMsg, NotifyEvent
@@ -132,12 +133,12 @@ class ClientReconnectFactory(ReconnectingClientFactory):
     #      connector, reason)
 
     def clientConnectionLost(self, connector, reason):
-        log.msg('Estoy en clientConnectionLost')
+        log.msg('Lost connection.')
         # ReconnectingClientFactory.clientConnectionLost(self,\
         #  connector, reason)
 
     def clientConnectionFailed(self, connector, reason):
-        log.msg('Estoy en clientConnectionFailed', reason)
+        log.msg('Connection failed.')
         # ReconnectingClientFactory.clientConnectionFailed(self,\
         #  connector, reason)
 
@@ -210,12 +211,14 @@ class SatNetGUI(QtGui.QDialog):
         grid.addWidget(ButtonCancel, 0, 1, 1, 1)
         grid.addWidget(ButtonLoad, 1, 0, 1, 2)
         grid.addWidget(ButtonHelp, 2, 1, 1, 1)
-        buttons.setTitle("Connection parameters")
+        buttons.setTitle("Connection")
         buttons.move(10, 10)
 
         # Parameters group.
         parameters = QtGui.QGroupBox(self)
         layout = QtGui.QFormLayout()
+        parameters.setLayout(layout)
+
         self.LabelUsername = QtGui.QLineEdit()
         self.LabelUsername.setFixedWidth(190)
         layout.addRow(QtGui.QLabel("Username:       "), self.LabelUsername)
@@ -242,9 +245,24 @@ class SatNetGUI(QtGui.QDialog):
         self.LabelUDPPort = QtGui.QLineEdit()
         layout.addRow(QtGui.QLabel("UDP port:       "), self.LabelUDPPort)
 
-        parameters.setLayout(layout)
-        parameters.setTitle("Connection parameters")
-        parameters.move(10, 150)
+        parameters.setTitle("User data")
+        parameters.move(10, 145)
+
+        # Configuration group.
+        configuration = QtGui.QGroupBox(self)
+        configurationLayout = QtGui.QVBoxLayout()
+        configuration.setLayout(configurationLayout)
+
+        self.LoadDefaultSettings =\
+         QtGui.QCheckBox("Automatically load settings from 'config.ini'")
+        self.LoadDefaultSettings.toggle()
+        configurationLayout.addWidget(self.LoadDefaultSettings)
+        self.AutomaticReconnection =\
+         QtGui.QCheckBox("Reconnect after a failure")
+        configurationLayout.addWidget(self.AutomaticReconnection)
+
+        configuration.setTitle("Configuration")
+        configuration.move(10, 400)
 
         # Logo.
         self.LabelLogo = QtGui.QLabel(self)
@@ -289,6 +307,12 @@ class SatNetGUI(QtGui.QDialog):
                     self.LabelUDP.setText(arg)
                 elif opt == "-u":
                     self.LabelUDPPort.setText(arg)
+
+        reconnection, parameters = self.LoadSettings()
+        if parameters == 'yes':
+            self.LoadParameters()
+        elif parameters == 'no':
+            pass
 
     def NewConnection(self):
 
@@ -344,6 +368,15 @@ class SatNetGUI(QtGui.QDialog):
         except Exception:
             print "Reactor not running."
 
+    def LoadSettings(self):
+        import ConfigParser
+        config = ConfigParser.ConfigParser()
+        config.read(".settings")
+
+        reconnection = config.get('Connection', 'reconnection')
+        parameters = config.get('Connection', 'parameters')
+
+        return reconnection, parameters
 
     def LoadParameters(self):
         self.CONNECTION_INFO = {}
@@ -458,15 +491,12 @@ class SatNetGUI(QtGui.QDialog):
 
         if reply == QtGui.QMessageBox.Yes:
             try:
+                self.c.disconnect()
                 reactor.stop()
             except Exception:
                 log.msg("Reactor not running.")
-            app.instance().quit
+
             event.accept()
-
-            # Tengo que parar el protocolo AMP.
-
-            # GroundStationInterface.disconnectProtocol()
         else:
             event.ignore()  
 
@@ -504,8 +534,10 @@ class XStream(QtCore.QObject):
 
 
 if __name__ == '__main__':
+    
+    log.startLogging(DailyLogFile.fromFullPath("foo.log"))
 
-    log.startLogging(sys.stdout)
+    # log.startLogging(sys.stdout)
     app = QtGui.QApplication(sys.argv)
     window = SatNetGUI()
     # app.aboutToQuit.connect(window.CloseConnection)
