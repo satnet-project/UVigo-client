@@ -1,6 +1,6 @@
 # coding=utf-8
 """
-   Copyright 2014 Xabier Crespo Álvarez
+   Copyright 2014, 2015 Xabier Crespo Álvarez
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -80,10 +80,12 @@ class ClientProtocol(AMP):
         log.msg(sMsg)
         if self.CONNECTION_INFO['connection'] == 'serial':        
             self.kissTNC.write(sMsg)
+        # Only serial communications are needed.
+        """
         elif self.CONNECTION_INFO['connection'] == 'udp':
             self.UDPSocket.sendto(sMsg, (self.CONNECTION_INFO['ip'],\
              self.CONNECTION_INFO['udpport']))
-
+        """
         return {}
     NotifyMsg.responder(vNotifyMsg)
 
@@ -176,7 +178,7 @@ class SatNetGUI(QtGui.QDialog):
         self.initUI()
 
     def initUI(self):
-        QtGui.QToolTip.setFont(QtGui.QFont('SansSerif', 12))
+        QtGui.QToolTip.setFont(QtGui.QFont('SansSerif', 11))
         self.setFixedSize(1300, 800)
         self.setWindowTitle("SATNet client - Universidade de Vigo") 
 
@@ -255,7 +257,6 @@ class SatNetGUI(QtGui.QDialog):
 
         self.LoadDefaultSettings =\
          QtGui.QCheckBox("Automatically load settings from 'config.ini'")
-        self.LoadDefaultSettings.toggle()
         configurationLayout.addWidget(self.LoadDefaultSettings)
         self.AutomaticReconnection =\
          QtGui.QCheckBox("Reconnect after a failure")
@@ -275,7 +276,7 @@ class SatNetGUI(QtGui.QDialog):
         console = QtGui.QTextBrowser(self)
         console.move(340, 10)
         console.resize(950, 780)
-        console.setFont(QtGui.QFont('SansSerif', 12))
+        console.setFont(QtGui.QFont('SansSerif', 11))
 
         XStream.stdout().messageWritten.connect(console.insertPlainText)
         XStream.stderr().messageWritten.connect(console.insertPlainText)
@@ -309,10 +310,15 @@ class SatNetGUI(QtGui.QDialog):
                     self.LabelUDPPort.setText(arg)
 
         reconnection, parameters = self.LoadSettings()
+        if reconnection == 'yes':
+            self.AutomaticReconnection.setChecked(True)
+        elif reconnection == 'no':
+            self.AutomaticReconnection.setChecked(False)
         if parameters == 'yes':
+            self.LoadDefaultSettings.setChecked(True)
             self.LoadParameters()
         elif parameters == 'no':
-            pass
+            self.LoadDefaultSettings.setChecked(False)
 
     def NewConnection(self):
 
@@ -540,7 +546,6 @@ if __name__ == '__main__':
     # log.startLogging(sys.stdout)
     app = QtGui.QApplication(sys.argv)
     window = SatNetGUI()
-    # app.aboutToQuit.connect(window.CloseConnection)
     window.show()
 
     from qtreactor import pyqt4reactor
