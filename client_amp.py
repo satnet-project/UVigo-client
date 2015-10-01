@@ -21,6 +21,7 @@ __author__ = 'xabicrespog@gmail.com'
 
 
 import sys
+import os
 
 from OpenSSL import SSL
 from PyQt4 import QtGui, QtCore
@@ -38,10 +39,10 @@ from protocol.ampCommands import StartRemote, NotifyMsg, NotifyEvent
 from protocol.errors import *
 
 from gs_interface import GroundStationInterface
-import getpass, getopt, threading
+import getpass
+import getopt
+import threading
 import misc
-
-import os
 
 
 class ClientProtocol(AMP):
@@ -72,7 +73,6 @@ class ClientProtocol(AMP):
         except Exception as e:
             log.err(e)
             reactor.stop()
-            # exit()
 
     def vNotifyMsg(self, sMsg):
         log.msg("(" + self.CONNECTION_INFO['username'] +\
