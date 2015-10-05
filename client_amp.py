@@ -189,6 +189,7 @@ class SatNetGUI(QtGui.QWidget):
         self.flag = True
         self.ConfigurationWindow = None
         self.initUI()
+        self.center()
 
     def initUI(self):
         QtGui.QToolTip.setFont(QtGui.QFont('SansSerif', 11))
@@ -518,6 +519,12 @@ class SatNetGUI(QtGui.QWidget):
                 "ip: 127.0.0.1\n"
                 "udpport: 5005")
 
+    def center(self):
+        frameGm = self.frameGeometry()
+        screen = QtGui.QApplication.desktop().screenNumber(QtGui.QApplication.desktop().cursor().pos())
+        centerPoint = QtGui.QApplication.desktop().screenGeometry(screen).center()
+        frameGm.moveCenter(centerPoint)
+        self.move(frameGm.topLeft())
 
     def closeEvent(self, event):
         
@@ -573,11 +580,35 @@ class ConfigurationWindow(QtGui.QWidget):
     def __init__(self):
         QtGui.QWidget.__init__(self)
         self.initUI()
+        self.center()
 
     def initUI(self):
         QtGui.QToolTip.setFont(QtGui.QFont('SansSerif', 11))
-        self.setFixedSize(400, 245)
-        self.setWindowTitle("Configuration window") 
+        self.setFixedSize(350, 135)
+        self.setWindowTitle("Configuration window")
+
+        configuration = QtGui.QGroupBox(self)
+        layout = QtGui.QFormLayout()
+        configuration.setLayout(layout)
+
+        self.LabelMaxRetries = QtGui.QLineEdit()
+        self.LabelMaxRetries.setFixedWidth(150)
+        layout.addRow(QtGui.QLabel("Maximum retries:         "),\
+         self.LabelMaxRetries)
+        self.LabelDelay = QtGui.QLineEdit()
+        self.LabelDelay.setFixedWidth(150)
+        layout.addRow(QtGui.QLabel("Password:                "),\
+         self.LabelDelay)
+
+        configuration.setTitle("User data")
+        configuration.move(10, 10)
+
+    def center(self):
+        frameGm = self.frameGeometry()
+        screen = QtGui.QApplication.desktop().screenNumber(QtGui.QApplication.desktop().cursor().pos())
+        centerPoint = QtGui.QApplication.desktop().screenGeometry(screen).center()
+        frameGm.moveCenter(centerPoint)
+        self.move(frameGm.topLeft())
 
 
 if __name__ == '__main__':
