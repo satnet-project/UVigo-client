@@ -24,7 +24,8 @@ import sys
 import os
 
 from OpenSSL import SSL
-from PyQt4 import QtGui, QtCore
+from PyQt4 import QtGui
+from PyQt4 import QtCore
 
 from twisted.python import log
 from twisted.internet.ssl import ClientContextFactory
@@ -34,9 +35,10 @@ from twisted.cred.credentials import UsernamePassword
 from twisted.internet.defer import inlineCallbacks
 from twisted.python.logfile import DailyLogFile
 
-from protocol.ampauth.commands import Login
-from protocol.ampCommands import StartRemote, NotifyMsg, NotifyEvent
-from protocol.errors import *
+from protocol.ampauth.login import Login
+from protocol.ampCommands import StartRemote
+from protocol.ampCommands import NotifyMsg
+from protocol.ampCommands import NotifyEvent
 
 from gs_interface import GroundStationInterface
 import getpass
@@ -59,7 +61,7 @@ class ClientProtocol(AMP):
 
     def connectionLost(self, reason):
         log.err("Connection lost")
-        # log.err(reason)
+        log.err(reason)
         self.gsi.disconnectProtocol()
 
     @inlineCallbacks
@@ -115,6 +117,7 @@ class ClientReconnectFactory(ReconnectingClientFactory):
     def __init__(self, CONNECTION_INFO, gsi):
         self.CONNECTION_INFO = CONNECTION_INFO
         self.gsi = gsi
+        continueTrying = None
 
     def startedConnecting(self, connector):
         log.msg('Starting connection...')
@@ -135,14 +138,16 @@ class ClientReconnectFactory(ReconnectingClientFactory):
     #      connector, reason)
 
     def clientConnectionLost(self, connector, reason):
+        self.continueTrying = None
         log.msg('Lost connection.')
-        # ReconnectingClientFactory.clientConnectionLost(self,\
-        #  connector, reason)
+        ReconnectingClientFactory.clientConnectionLost(self,\
+         connector, reason)
 
     def clientConnectionFailed(self, connector, reason):
+        self.continueTrying = None
         log.msg('Connection failed.')
-        # ReconnectingClientFactory.clientConnectionFailed(self,\
-        #  connector, reason)
+        ReconnectingClientFactory.clientConnectionFailed(self,\
+         connector, reason)
 
 
 class Client():
@@ -171,10 +176,18 @@ class Client():
         return connector
 
 
-class SatNetGUI(QtGui.QDialog):
+"""
+Really we need to use QtGui.QMainWindow class. For time reasons we 
+maintain QtGui.QWidget although is not the right way.
+class SatNetGUI(QtGui.QMainWindow):
+"""
+
+class SatNetGUI(QtGui.QWidget):
 
     def __init__(self, parent = None):
         QtGui.QWidget.__init__(self, parent)
+        self.flag = True
+        self.ConfigurationWindow = None
         self.initUI()
 
     def initUI(self):
@@ -203,6 +216,11 @@ class SatNetGUI(QtGui.QDialog):
         ButtonLoad.setToolTip("Load parameters from <i>config.ini</i> file")
         ButtonLoad.setFixedWidth(300)
         ButtonLoad.clicked.connect(self.LoadParameters)
+        # Configuration
+        ButtonConfiguration = QtGui.QPushButton("Configuration")
+        ButtonConfiguration.setToolTip("Set configuration")
+        ButtonConfiguration.setFixedWidth(145)
+        ButtonConfiguration.clicked.connect(self.SetConfiguration)
         # Help.
         ButtonHelp = QtGui.QPushButton("Help")
         ButtonHelp.setToolTip("Click for help")
@@ -212,6 +230,7 @@ class SatNetGUI(QtGui.QDialog):
         grid.addWidget(ButtonNew, 0, 0, 1, 1)
         grid.addWidget(ButtonCancel, 0, 1, 1, 1)
         grid.addWidget(ButtonLoad, 1, 0, 1, 2)
+        grid.addWidget(ButtonConfiguration, 2, 0, 1, 1)
         grid.addWidget(ButtonHelp, 2, 1, 1, 1)
         buttons.setTitle("Connection")
         buttons.move(10, 10)
@@ -262,7 +281,7 @@ class SatNetGUI(QtGui.QDialog):
          QtGui.QCheckBox("Reconnect after a failure")
         configurationLayout.addWidget(self.AutomaticReconnection)
 
-        configuration.setTitle("Configuration")
+        configuration.setTitle("Basic configuration")
         configuration.move(10, 400)
 
         # Logo.
@@ -321,7 +340,6 @@ class SatNetGUI(QtGui.QDialog):
             self.LoadDefaultSettings.setChecked(False)
 
     def NewConnection(self):
-
         self.CONNECTION_INFO = {}
 
         try:
@@ -366,11 +384,19 @@ class SatNetGUI(QtGui.QDialog):
 
         self.c = Client(self.CONNECTION_INFO).createConnection()
 
+        # if not self.flag:
+        #     print "Senal previamente desconectada"
+        #     self.c = Client(self.CONNECTION_INFO).createConnection()
+        # else:
+        #     print "Senal previamente conectada"
+            
+
     # To-do. Not closed properly.
     def CloseConnection(self):
         try:
             self.c.disconnect()
             reactor.stop()
+            self.flag = False
         except Exception:
             print "Reactor not running."
 
@@ -424,6 +450,10 @@ class SatNetGUI(QtGui.QDialog):
             self.CONNECTION_INFO['udpport'] = int(config.get('UDP',\
              'udpport'))
             self.LabelUDPPort.setText(config.get('UDP', 'udpport'))
+
+    def SetConfiguration(self):
+        self.ConfigurationWindow = ConfigurationWindow()
+        self.ConfigurationWindow.show()
 
     def CheckConnection(self):
         Connection = str(self.LabelConnection.currentText())
@@ -539,12 +569,24 @@ class XStream(QtCore.QObject):
         return XStream._stderr
 
 
+class ConfigurationWindow(QtGui.QWidget):
+    def __init__(self):
+        QtGui.QWidget.__init__(self)
+        self.initUI()
+
+    def initUI(self):
+        QtGui.QToolTip.setFont(QtGui.QFont('SansSerif', 11))
+        self.setFixedSize(400, 245)
+        self.setWindowTitle("Configuration window") 
+
+
 if __name__ == '__main__':
     
     log.startLogging(DailyLogFile.fromFullPath("foo.log"))
 
     # log.startLogging(sys.stdout)
     app = QtGui.QApplication(sys.argv)
+    app.setWindowIcon(QtGui.QIcon('logo.png'))
     window = SatNetGUI()
     window.show()
 
