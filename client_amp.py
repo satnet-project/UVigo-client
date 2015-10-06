@@ -114,6 +114,11 @@ class ClientProtocol(AMP):
 
 
 class ClientReconnectFactory(ReconnectingClientFactory):
+    """
+    ReconnectingClientFactory inherited object class to handle the 
+    connection process.
+
+    """
     def __init__(self, CONNECTION_INFO, gsi):
         self.CONNECTION_INFO = CONNECTION_INFO
         self.gsi = gsi
@@ -183,6 +188,10 @@ class SatNetGUI(QtGui.QMainWindow):
 """
 
 class SatNetGUI(QtGui.QWidget):
+    """
+    This class creates an object of class QtGui.QWidget to the main window.
+
+    """
 
     def __init__(self, parent = None):
         QtGui.QWidget.__init__(self, parent)
@@ -341,6 +350,11 @@ class SatNetGUI(QtGui.QWidget):
             self.LoadDefaultSettings.setChecked(False)
 
     def NewConnection(self):
+        """
+        Create a new connection by loading the connection parameters from 
+        the command line or from the interface window.
+
+        """
         self.CONNECTION_INFO = {}
 
         try:
@@ -402,6 +416,10 @@ class SatNetGUI(QtGui.QWidget):
             print "Reactor not running."
 
     def LoadSettings(self):
+        """
+        Load settings from .settings file.
+
+        """
         import ConfigParser
         config = ConfigParser.ConfigParser()
         config.read(".settings")
@@ -412,6 +430,10 @@ class SatNetGUI(QtGui.QWidget):
         return reconnection, parameters
 
     def LoadParameters(self):
+        """
+        Load connection parameters from config.ini file.
+
+        """
         self.CONNECTION_INFO = {}
 
         import ConfigParser
@@ -545,7 +567,12 @@ class SatNetGUI(QtGui.QWidget):
 
 
 class XStream(QtCore.QObject):
+    """
 
+    This class creates an object of class QtCore.QObject to 
+    display announcements.
+
+    """
     _stdout = None
     _stderr = None
 
@@ -577,6 +604,12 @@ class XStream(QtCore.QObject):
 
 
 class ConfigurationWindow(QtGui.QWidget):
+    """
+
+    This class creates a new window where you can set the 
+    connection parameters.
+
+    """
     def __init__(self):
         QtGui.QWidget.__init__(self)
         self.initUI()
