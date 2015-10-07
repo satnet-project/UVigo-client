@@ -36,6 +36,7 @@ from twisted.internet.defer import inlineCallbacks
 from twisted.python.logfile import DailyLogFile
 
 from protocol.ampauth.login import Login
+from protocol.ampCommands import EndRemote
 from protocol.ampCommands import StartRemote
 from protocol.ampCommands import NotifyMsg
 from protocol.ampCommands import NotifyEvent
@@ -49,7 +50,7 @@ import misc
 
 class ClientProtocol(AMP):
 
-    CONNECTION_INFO = {}
+    # CONNECTION_INFO = {}
 
     def __init__(self, CONNECTION_INFO, gsi):
         self.CONNECTION_INFO = CONNECTION_INFO
@@ -63,6 +64,11 @@ class ClientProtocol(AMP):
         log.err("Connection lost")
         log.err(reason)
         self.gsi.disconnectProtocol()
+        # self.desconexion()
+
+    @inlineCallbacks
+    def desconexion(self):
+        res = yield self.callRemote(EndRemote)
 
     @inlineCallbacks
     def user_login(self):        
@@ -195,13 +201,12 @@ class SatNetGUI(QtGui.QWidget):
 
     def __init__(self, parent = None):
         QtGui.QWidget.__init__(self, parent)
-        self.flag = True
         self.ConfigurationWindow = None
         self.initUI()
         self.center()
 
     def initUI(self):
-        QtGui.QToolTip.setFont(QtGui.QFont('SansSerif', 11))
+        QtGui.QToolTip.setFont(QtGui.QFont('SansSerif', 10))
         self.setFixedSize(1300, 800)
         self.setWindowTitle("SATNet client - Universidade de Vigo") 
 
@@ -305,7 +310,7 @@ class SatNetGUI(QtGui.QWidget):
         console = QtGui.QTextBrowser(self)
         console.move(340, 10)
         console.resize(950, 780)
-        console.setFont(QtGui.QFont('SansSerif', 11))
+        console.setFont(QtGui.QFont('SansSerif', 10))
 
         XStream.stdout().messageWritten.connect(console.insertPlainText)
         XStream.stderr().messageWritten.connect(console.insertPlainText)
@@ -399,19 +404,11 @@ class SatNetGUI(QtGui.QWidget):
 
         self.c = Client(self.CONNECTION_INFO).createConnection()
 
-        # if not self.flag:
-        #     print "Senal previamente desconectada"
-        #     self.c = Client(self.CONNECTION_INFO).createConnection()
-        # else:
-        #     print "Senal previamente conectada"
-            
-
     # To-do. Not closed properly.
     def CloseConnection(self):
         try:
             self.c.disconnect()
             reactor.stop()
-            self.flag = False
         except Exception:
             print "Reactor not running."
 
