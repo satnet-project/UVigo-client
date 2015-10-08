@@ -130,6 +130,7 @@ class ClientReconnectFactory(ReconnectingClientFactory):
         self.gsi = gsi
         continueTrying = None
 
+
     def startedConnecting(self, connector):
         log.msg('Starting connection...')
 
@@ -149,16 +150,25 @@ class ClientReconnectFactory(ReconnectingClientFactory):
     #      connector, reason)
 
     def clientConnectionLost(self, connector, reason):
-        self.continueTrying = None
+        # self.continueTrying = None
+        self.connector = Client(self.CONNECTION_INFO).createConnection()
+
         log.msg('Lost connection.')
         ReconnectingClientFactory.clientConnectionLost(self,\
-         connector, reason)
+         self.connector, reason)
 
     def clientConnectionFailed(self, connector, reason):
-        self.continueTrying = None
+        # self.continueTrying = None
+        self.connector = Client(self.CONNECTION_INFO).createConnection()
+
         log.msg('Connection failed.')
         ReconnectingClientFactory.clientConnectionFailed(self,\
-         connector, reason)
+         self.connector, reason)
+
+
+        """
+        Le dice que le pasa el connector pero. ¿donde se lo pasa? ¿eh?
+        """
 
 
 class Client():
@@ -179,6 +189,12 @@ class Client():
 
     def createConnection(self):
         gsi = GroundStationInterface(self.CONNECTION_INFO, "Vigo")
+
+
+        """
+        Este connector tiene que ir a la clase que reconnecta
+        """
+
 
         connector = reactor.connectSSL('localhost', 1234,\
          ClientReconnectFactory(self.CONNECTION_INFO, gsi),\
