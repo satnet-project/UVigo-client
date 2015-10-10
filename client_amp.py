@@ -50,8 +50,6 @@ import misc
 
 class ClientProtocol(AMP):
 
-    # CONNECTION_INFO = {}
-
     def __init__(self, CONNECTION_INFO, gsi):
         self.CONNECTION_INFO = CONNECTION_INFO
         self.gsi = gsi
@@ -151,20 +149,19 @@ class ClientReconnectFactory(ReconnectingClientFactory):
 
     def clientConnectionLost(self, connector, reason):
         # self.continueTrying = None
-        self.connector = Client(self.CONNECTION_INFO).createConnection()
+        connector = Client(self.CONNECTION_INFO).createConnection()
 
-        log.msg('Lost connection.')
+        log.msg('Lost connection. Reason: ', reason)
         ReconnectingClientFactory.clientConnectionLost(self,\
-         self.connector, reason)
+         connector, reason)
 
     def clientConnectionFailed(self, connector, reason):
         # self.continueTrying = None
-        self.connector = Client(self.CONNECTION_INFO).createConnection()
+        connector = Client(self.CONNECTION_INFO).createConnection()
 
-        log.msg('Connection failed.')
+        log.msg('Connection failed. Reason: ', reason)
         ReconnectingClientFactory.clientConnectionFailed(self,\
-         self.connector, reason)
-
+         connector, reason)
 
         """
         Le dice que le pasa el connector pero. ¿donde se lo pasa? ¿eh?
@@ -189,12 +186,6 @@ class Client():
 
     def createConnection(self):
         gsi = GroundStationInterface(self.CONNECTION_INFO, "Vigo")
-
-
-        """
-        Este connector tiene que ir a la clase que reconnecta
-        """
-
 
         connector = reactor.connectSSL('localhost', 1234,\
          ClientReconnectFactory(self.CONNECTION_INFO, gsi),\
@@ -420,11 +411,16 @@ class SatNetGUI(QtGui.QWidget):
 
         self.c = Client(self.CONNECTION_INFO).createConnection()
 
+
     # To-do. Not closed properly.
     def CloseConnection(self):
+        """
+        Closes the connection in a fancy way.
+        """
         try:
+            print type(self.c)
             self.c.disconnect()
-            reactor.stop()
+            # reactor.stop()
         except Exception:
             print "Reactor not running."
 
@@ -667,6 +663,9 @@ if __name__ == '__main__':
     window = SatNetGUI()
     window.show()
 
+    """
+    Using a specific reactor implementation, pyqt4reactor
+    """
     from qtreactor import pyqt4reactor
     pyqt4reactor.install()
 
