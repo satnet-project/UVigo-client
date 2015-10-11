@@ -164,5 +164,5 @@ class GroundStationInterface():
     when the connection to the SATNET server is lost.
     """
     def disconnectProtocol(self):
-        log.msg('Protocol disconnected from the GS')
-        self.AMP = None        
+        log.msg('Protocol disconnected from the GS')   
+        self.AMP = None

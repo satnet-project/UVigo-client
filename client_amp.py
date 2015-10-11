@@ -62,11 +62,10 @@ class ClientProtocol(AMP):
         log.err("Connection lost")
         log.err(reason)
         self.gsi.disconnectProtocol()
-        # self.desconexion()
 
-    @inlineCallbacks
-    def desconexion(self):
-        res = yield self.callRemote(EndRemote)
+    # @inlineCallbacks
+    # def desconexion(self):
+    #     res = yield self.callRemote(EndRemote)
 
     @inlineCallbacks
     def user_login(self):        
@@ -120,14 +119,13 @@ class ClientProtocol(AMP):
 class ClientReconnectFactory(ReconnectingClientFactory):
     """
     ReconnectingClientFactory inherited object class to handle the 
-    connection process.
+    reconnection process.
 
     """
     def __init__(self, CONNECTION_INFO, gsi):
         self.CONNECTION_INFO = CONNECTION_INFO
         self.gsi = gsi
-        continueTrying = None
-
+        # self.continueTrying = 0
 
     def startedConnecting(self, connector):
         log.msg('Starting connection...')
@@ -137,35 +135,25 @@ class ClientReconnectFactory(ReconnectingClientFactory):
         self.resetDelay()
         return ClientProtocol(self.CONNECTION_INFO, self.gsi)
 
-    # def clientConnectionLost(self, connector, reason):
-    #     log.msg('Lost connection.  Reason: ', reason)
-    #     ReconnectingClientFactory.clientConnectionLost(self,\
-    #      connector, reason)
-
-    # def clientConnectionFailed(self, connector, reason):
-    #     log.msg('Connection failed. Reason: ', reason)
-    #     ReconnectingClientFactory.clientConnectionFailed(self,\
-    #      connector, reason)
-
     def clientConnectionLost(self, connector, reason):
-        # self.continueTrying = None
-        connector = Client(self.CONNECTION_INFO).createConnection()
+        """
+        self.CONNECTION_INFO ok
+        """
+        self.continueTrying = None
 
         log.msg('Lost connection. Reason: ', reason)
         ReconnectingClientFactory.clientConnectionLost(self,\
          connector, reason)
 
     def clientConnectionFailed(self, connector, reason):
-        # self.continueTrying = None
-        connector = Client(self.CONNECTION_INFO).createConnection()
+        """
+        self.CONNECTION_INFO ok
+        """
+        self.continueTrying = None
 
         log.msg('Connection failed. Reason: ', reason)
         ReconnectingClientFactory.clientConnectionFailed(self,\
          connector, reason)
-
-        """
-        Le dice que le pasa el connector pero. ¿donde se lo pasa? ¿eh?
-        """
 
 
 class Client():
@@ -186,6 +174,8 @@ class Client():
 
     def createConnection(self):
         gsi = GroundStationInterface(self.CONNECTION_INFO, "Vigo")
+
+        global connector
 
         connector = reactor.connectSSL('localhost', 1234,\
          ClientReconnectFactory(self.CONNECTION_INFO, gsi),\
@@ -236,7 +226,7 @@ class SatNetGUI(QtGui.QWidget):
         # Load parameters from file
         ButtonLoad = QtGui.QPushButton("Load parameters from file")
         ButtonLoad.setToolTip("Load parameters from <i>config.ini</i> file")
-        ButtonLoad.setFixedWidth(300)
+        ButtonLoad.setFixedWidth(298)
         ButtonLoad.clicked.connect(self.LoadParameters)
         # Configuration
         ButtonConfiguration = QtGui.QPushButton("Configuration")
