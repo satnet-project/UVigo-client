@@ -62,6 +62,7 @@ class ClientProtocol(AMP):
         log.err("Connection lost")
         log.err(reason)
         self.gsi.disconnectProtocol()
+        res = yield self.callRemote(EndRemote)
 
     # @inlineCallbacks
     # def desconexion(self):
@@ -408,16 +409,13 @@ class SatNetGUI(QtGui.QWidget):
         Closes the connection in a fancy way.
         """
         try:
-            print type(self.c)
             self.c.disconnect()
-            # reactor.stop()
         except Exception:
-            print "Reactor not running."
+            log.msg('Already stopped.')
 
     def LoadSettings(self):
         """
         Load settings from .settings file.
-
         """
         import ConfigParser
         config = ConfigParser.ConfigParser()
@@ -431,7 +429,6 @@ class SatNetGUI(QtGui.QWidget):
     def LoadParameters(self):
         """
         Load connection parameters from config.ini file.
-
         """
         self.CONNECTION_INFO = {}
 
