@@ -9,7 +9,15 @@ for the University of Vigo.
 This is the code for a GS with a TNC to demodulate/modulate the frames 
 which are being received/sent from/to the satellite.
 
-In the file INSTALL you will find detailed installation instructions.
+### Installation
+
+Steps to install the UVigo client for the SATNet network:
+
+1. To install the dependencies run, from the Scripts folder:
+
+`setup.sh`
+
+You will need root privileges.
 
 #### Dependencies
 
